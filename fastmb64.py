@@ -1,7 +1,7 @@
 bl_info = {
     "name": "FastMB64",
     "author": "GreenyNeko",
-    "version": (1, 0),
+    "version": (1, 0, 1),
     "blender": (4, 0, 0),
     "location": "File > Import > MB64",
     "description": "Imports .mb64 file and builds a scene using Fast64",
@@ -1085,7 +1085,6 @@ class ImportMB64(bpy.types.Operator, ImportHelper):
                     #bmesh.ops.recalc_face_normals(current_bm, faces=current_bm.faces[-newFaces:])
                 for face in current_bm.faces[-newFaces:]:
                     if face.normal.dot((0, 0, 1)) > 0.1:
-                        self.report({'INFO'}, f"Setting face to mat {topMatIdx}.")
                         face.material_index = topMatIdx
                     else:
                         face.material_index = generalMatIdx
@@ -1156,7 +1155,7 @@ class ImportMB64(bpy.types.Operator, ImportHelper):
             location=(0,0,-10)
         )
         plane = bpy.context.active_object
-        size = (self.mb_size * 16 + 32) + extraSize,
+        size = (self.mb_size * 16 + 32) + extraSize
         plane.scale = (size,size,1)
         plane.name = "MB64 Death Plane"
         bpy.ops.object.create_f3d_mat()
