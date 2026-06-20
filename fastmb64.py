@@ -1,7 +1,7 @@
 bl_info = {
     "name": "FastMB64",
     "author": "GreenyNeko",
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "blender": (4, 0, 0),
     "location": "File > Import > MB64",
     "description": "Imports .mb64 file and builds a scene using Fast64",
@@ -15,100 +15,110 @@ import bmesh
 from mathutils import Vector, Matrix
 import math
 
-idToObjData = {2: {"name": "Power Star", "type": 'Object', "model": 'MODEL_STAR', "behavior": '13003e3c'},
-    3: {"name": "Red Coin Star", "type": 'Object', "model": 'MODEL_STAR', "behavior": '13003e8c' },
-    4: {"name": "Goomba", "type": 'Macro', "preset": 'macro_goomba'},
-    5: {"name": "Huge Goomba", "type": 'Macro', "preset": 'macro_huge_goomba'},
-    6: {"name": "Tiny Goomba", "type": 'Macro', "preset": 'macro_tiny_goomba'},
-    7: {"name": "Piranha Plant", "type": 'Macro', "preset": 'macro_piranha_plant'},
-    8: {"name": "Big Piranha Plant", "type": 'Object', "model": 'MODEL_PIRANHA_PLANT', "behavior": '13005120'},
-    9: {"name": "Tiny Piranha Plant", "type": 'Object', "model": 'MODEL_PIRANHA_PLANT', "behavior": '13005120'},
-    10: {"name": "Koopa", "type": 'Macro', "preset": 'macro_koopa'},
-    11: {"name": "Yellow Coin", "type": 'Macro', "preset": 'macro_yellow_coin'},
-    12: {"name": "1-up (Green Coin)", "type": 'Object', "model": 'MODEL_1UP', "behavior": '1300407c'},
-    13: {"name": "Red Coin", "type": 'Macro', "preset": 'macro_red_coin'},
-    14: {"name": "Blue Coin", "type": 'Macro', "preset": 'macro_hidden_blue_coin'},
-    15: {"name": "Blue Coin Switch", "type": 'Macro', "preset": 'macro_blue_coin_switch'},
-    16: {"name": "Trampoline (Noteblock)", "type": 'Object', "model": 'MODEL_TRAMPOLINE', "behavior": '13001608'},
-    17: {"name": "Bob Omb", "type": 'Macro', "preset": 'macro_bobomb'},
-    18: {"name": "Chuckya", "type": 'Macro', "preset": 'macro_chuckya'},
-    19: {"name": "Bully", "type": 'Macro', "preset": 'macro_bully'},
-    20: {"name": "Chill Bully", "type": 'Object', "model": 'MODEL_CHILL_BULLY', "behavior": '130036c8'},
-    21: {"name": "Bullet Bill", "type": 'Macro', "preset": 'macro_bullet_bill_cannon'},
-    22: {"name": "Heave Ho", "type": 'Macro', "preset": 'macro_heave_ho'},
-    23: {"name": "Chuckya (Motos)", "type": 'Object', "model": 'MODEL_CHUCKYA', "behavior": '13000528'},
-    24: {"name": "Tree", "type": 'Object', "model": 'MODEL_BOB_BUBBLY_TREE', "behavior": '13002aa4'},
-    25: {"name": "!-Box", "type": 'Object', "model": 'MODEL_EXCLAMATION_BOX', "behavior": '13002250'},
-    26: {"name": "Mario Spawn", "type": 'Mario Start'},
-    27: {"name": "Shelless Koopa (Rex)", "type": 'Object', "model": 'MODEL_KOOPA_WITHOUT_SHELL', "behavior": '13004580'},
-    28: {"name": "Bouncing Fireball (Poodoobo)", "type": 'Object', "model": 'MODEL_RED_FLAME', "behavior": '13001168'},
-    29: {"name": "Scuttlebug (Crablet)", "type": 'Object', "model": 'MODEL_SCUTTLEBUG', "behavior": '13002b5c'},
-    30: {"name": "Snufit (Hammerbro)", "type": 'Object', "model": 'MODEL_SNUFIT', "behavior": '130051e0'},
-    31: {"name": "Flyguy Flame (Firebro)", "type": 'Object', "model": 'MODEL_FLYGUY', "behavior": '130051ac'},
-    32: {"name": "Flyguy Flame (Chicken)", "type": 'Object', "model": 'MODEL_FLYGUY', "behavior": '130051ac'},
-    33: {"name": "Missing (Cosmic Phantasm)", "type": 'None'},
-    34: {"name": "Warp Pipe", "type": 'Object', "model": 'MODEL_THI_WARP_PIPE', "behavior": '130007a0'},
-    35: {"name": "Missing (Badge)", "type": 'None'},
-    36: {"name": "King Bobomb", "type": 'Object', "model": 'MODEL_KING_BOBOMB', "behavior": '130001f4'},
-    37: {"name": "Whomp King", "type": 'Object', "model": 'MODEL_WHOMP', "behavior": '13002bb8'},
-    38: {"name": "Big Boo", "type": 'Object', "model": 'MODEL_BOO', "behavior": '130027e4'},
-    39: {"name": "Big Bully", "type": 'Object', "model": 'MODEL_BULLY', "behavior": '13003660'},
-    40: {"name": "Big Chill Bully", "type": 'Object', "model": 'MODEL_BIG_CHILL_BULLY', "behavior": '13003700'},
-    41: {"name": "Wiggler", "type": 'Macro', "preset": 'macro_wiggler'},
-    42: {"name": "Bowser", "type": 'Object', "model": 'MODEL_BOWSER', "behavior": '13001850'},
-    43: {"name": "Yellow Platform", "type": 'Object', "model": 'MODEL_CHECKERBOARD_PLATFOMR', "behavior": '13004ab0'},
-    44: {"name": "Blue Platform (WIP)", "type": 'Object', "model": 'MODEL_BITS_BLUE_PLATFORM', "behavior": '13004ab0'},
-    45: {"name": "Bowling Ball Spawner", "type": 'Object', "model": 'MODEL_NONE', "behavior": '13003aa4'},
-    46: {"name": "Koopa the Quick", "type": 'Macro', "preset": 'macro_bob_koopa_the_quick'},
-    47: {"name": "Purple Switch", "type": 'Object', "model": 'MODEL_PURPLE_SWITCH', "behavior": '13002558'},
-    48: {"name": "Timed Breakable Box", "type": 'Macro', "preset": 'macro_hidden_box'},
-    49: {"name": "Recovery Heart", "type": 'Macro', "preset": 'macro_recovery_heart'},
-    50: {"name": "Test Mario", "type": 'None'},
-    51: {"name": "Thwomp", "type": 'Macro', "preset": 'macro_thwomp'},
-    52: {"name": "Whomp", "type": 'Macro', "preset": 'macro_whomp'},
-    53: {"name": "Grindel", "type": 'Object', "model": 'MODEL_SSL_GRINDEL', "behavior": '13000b58'},
-    54: {"name": "Lakitu", "type": 'Macro', "preset": 'macro_enemy_lakitu'},
-    55: {"name": "Flyguy", "type": 'Macro', "preset": 'macro_fly_guy'},
-    56: {"name": "Snufit", "type": 'Macro', "preset": 'macro_snufit'},
-    57: {"name": "Circling Amp", "type": 'Macro', "preset": 'macro_circling_amp'},
-    58: {"name": "Boo", "type": 'Macro', "preset": 'macro_boo'},
-    59: {"name": "Mr. I", "type": 'Macro', "preset": 'macro_mr_i'},
-    60: {"name": "Scuttlebug", "type": 'Macro', "preset": 'macro_scuttlebug'},
-    61: {"name": "Bowser Bomb", "type": 'Object', "model": 'MODEL_BOWSER_BOMB', "behavior": '130037ec'},
-    62: {"name": "Firespinner", "type": 'Object', "model": 'MODEL_LLL_ROTATING_BLOCK_FIRE_BARS', "behavior": '13001da8'},
-    63: {"name": "Coin Formation (WIP)", "type": 'Macro', "preset": 'macro_coin_line_horizontal_flying'},
-    64: {"name": "Red Flame", "type": 'Object', "model": 'MODEL_RED_FLAME', "behavior": '13000c84'},
-    65: {"name": "Blue Flame", "type": 'Object', "model": 'MODEL_BLUE_FLAME', "behavior": '13000c84'},
-    66: {"name": "Fire Spitter", "type": 'Macro', "preset": 'macro_fire_spitter'},
-    67: {"name": "Flamethrower", "type": 'Macro', "preset": 'macro_flamethrower'},
-    68: {"name": "Spindrift", "type": 'Macro', "preset": 'macro_spindrift'},
-    69: {"name": "Mr. Blizzard", "type": 'Macro', "preset": 'macro_mr_blizzard'},
-    70: {"name": "Moneybag", "type": 'Macro', "preset": 'macro_moneybag'},
-    71: {"name": "Skeeter", "type": 'Macro', "preset": 'macro_skeeter'},
-    72: {"name": "Pokey", "type": 'Macro', "preset": 'macro_pokey'},
-    73: {"name": "Small Breakable Box", "type": 'Macro', "preset": 'macro_breakable_box_small'},
-    74: {"name": "Giant Breakable Box", "type": 'Macro', "preset": 'macro_breakable_box_giant'},
-    75: {"name": "Missing (Crazy Box)", "type": 'None'},
-    76: {"name": "Water Diamond", "type": 'Object', "model": 'MODEL_WDW_WATER_LEVEL_DIAMOND', "behavior": '130025f8'},
-    77: {"name": "Wooden Signpost", "type": 'Macro', "preset": 'macro_wooden_signpost'},
-    78: {"name": "Bobomb Buddy (NPC)", "type": 'Object', "model": 'MODEL_BOBOMB_BUDDY', "behavior": '130031dc'},
-    79: {"name": "Missing (Button)", "type": 'None'},
-    80: {"name": "Missing (On Off Block)", "type": 'None'},
-    81: {"name": "Floating Platform", "type": 'Object', "model": 'MODEL_WDW_SQUARE_FLOATING_PLATFORM', "behavior": '13004284'},
-    82: {"name": "Missing (Reinforced Box)", "type": 'None'},
-    83: {"name": "Missing (On Off Block)", "type": 'None'},
-    84: {"name": "Missing (Showrunner)", "type": 'None'},
-    85: {"name": "Missing (Crowbar)", "type": 'None'},
-    86: {"name": "Missing (Bullet Bill Mask)", "type": 'None'},
-    87: {"name": "Toad (NPC)", "type": 'Object', "model": 'MODEL_TOAD', "behavior": '13002ef8'},
-    88: {"name": "Tuxie (NPC)", "type": 'Object', "model": 'MODEL_PENGUIN', "behavior": '13002088'},
-    89: {"name": "Ukiki (NPC)", "type": 'Object', "model": 'MODEL_UKIKI', "behavior": '13002088'},
-    90: {"name": "Toad (NPC Moleman)", "type": 'Object', "model": 'MODEL_MONTY_MOLE', "behavior": '13002ef8'},
-    91: {"name": "Buddy (NPC Cobie)", "type": 'Object', "model": 'MODEL_BOBOMB_BUDDY', "behavior": '130031dc'},    
-    92: {"name": "Treadmill (Conveyor)", "type": 'Macro', "preset": 'macro_ttc_small_treadmill'},
-    93: {"name": "Missing (Timed Block)", "type": 'None'},
-    94: {"name": "Hidden Star Trigger", "type": 'Macro', "preset": 'macro_hidden_star_trigger'},
-    95: {"name": "Star Trigger Star? (WIP)", "type": 'Object', "model": 'MODEL_STAR', "behavior": '13003efc'},
+def coinFormationParamHandler(self, objData, bParam):
+    specialMacros = [{"macro": 'macro_coin_line_horizontal', "name": "(h-line)"},
+        {"macro": 'macro_coin_line_vertical', "name": "(v-line)"},
+        {"macro": 'macro_coin_ring_horizontal', "name": "(h-ring)"},
+        {"macro": 'macro_coin_ring_vertical', "name": "(v-ring)"},
+        {"macro": 'macro_coin_arrow', "name": "arrow"}
+    ]
+    bpy.context.object.sm64_macro_enum = specialMacros[bParam]["macro"]
+    bpy.context.object.name = objData["name"] + " " + specialMacros[bParam]["name"]
+
+idToObjData = {2: {"name": "Power Star", "type": 'Object', "model": 'MODEL_STAR', "behavior": '13003e3c', "hasParams": False},
+    3: {"name": "Red Coin Star", "type": 'Object', "model": 'MODEL_STAR', "behavior": '13003e8c', "hasParams": False },
+    4: {"name": "Goomba", "type": 'Macro', "preset": 'macro_goomba', "hasParams": False},
+    5: {"name": "Huge Goomba", "type": 'Macro', "preset": 'macro_huge_goomba', "hasParams": False},
+    6: {"name": "Tiny Goomba", "type": 'Macro', "preset": 'macro_tiny_goomba', "hasParams": False},
+    7: {"name": "Piranha Plant", "type": 'Macro', "preset": 'macro_piranha_plant', "hasParams": False},
+    8: {"name": "Big Piranha Plant", "type": 'Object', "model": 'MODEL_PIRANHA_PLANT', "behavior": '13005120', "hasParams": False},
+    9: {"name": "Tiny Piranha Plant", "type": 'Object', "model": 'MODEL_PIRANHA_PLANT', "behavior": '13005120', "hasParams": False},
+    10: {"name": "Koopa", "type": 'Macro', "preset": 'macro_koopa', "hasParams": False},
+    11: {"name": "Yellow Coin", "type": 'Macro', "preset": 'macro_yellow_coin', "hasParams": False},
+    12: {"name": "1-up (Green Coin)", "type": 'Object', "model": 'MODEL_1UP', "behavior": '1300407c', "hasParams": False},
+    13: {"name": "Red Coin", "type": 'Macro', "preset": 'macro_red_coin', "hasParams": False},
+    14: {"name": "Blue Coin", "type": 'Macro', "preset": 'macro_hidden_blue_coin', "hasParams": False},
+    15: {"name": "Blue Coin Switch", "type": 'Macro', "preset": 'macro_blue_coin_switch', "hasParams": False},
+    16: {"name": "Trampoline (Noteblock)", "type": 'Object', "model": 'MODEL_TRAMPOLINE', "behavior": '13001608', "hasParams": False},
+    17: {"name": "Bob Omb", "type": 'Macro', "preset": 'macro_bobomb', "hasParams": False},
+    18: {"name": "Chuckya", "type": 'Macro', "preset": 'macro_chuckya', "hasParams": False},
+    19: {"name": "Bully", "type": 'Macro', "preset": 'macro_bully', "hasParams": False},
+    20: {"name": "Chill Bully", "type": 'Object', "model": 'MODEL_CHILL_BULLY', "behavior": '130036c8', "hasParams": False},
+    21: {"name": "Bullet Bill", "type": 'Macro', "preset": 'macro_bullet_bill_cannon', "hasParams": False},
+    22: {"name": "Heave Ho", "type": 'Macro', "preset": 'macro_heave_ho', "hasParams": False},
+    23: {"name": "Chuckya (Motos)", "type": 'Object', "model": 'MODEL_CHUCKYA', "behavior": '13000528', "hasParams": False},
+    24: {"name": "Tree", "type": 'Object', "model": 'MODEL_BOB_BUBBLY_TREE', "behavior": '13002aa4', "hasParams": False},
+    25: {"name": "!-Box", "type": 'Object', "model": 'MODEL_EXCLAMATION_BOX', "behavior": '13002250', "hasParams": False},
+    26: {"name": "Mario Spawn", "type": 'Mario Start', "hasParams": False},
+    27: {"name": "Shelless Koopa (Rex)", "type": 'Object', "model": 'MODEL_KOOPA_WITHOUT_SHELL', "behavior": '13004580', "hasParams": False},
+    28: {"name": "Bouncing Fireball (Poodoobo)", "type": 'Object', "model": 'MODEL_RED_FLAME', "behavior": '13001168', "hasParams": False},
+    29: {"name": "Scuttlebug (Crablet)", "type": 'Object', "model": 'MODEL_SCUTTLEBUG', "behavior": '13002b5c', "hasParams": False},
+    30: {"name": "Snufit (Hammerbro)", "type": 'Object', "model": 'MODEL_SNUFIT', "behavior": '130051e0', "hasParams": False},
+    31: {"name": "Flyguy Flame (Firebro)", "type": 'Object', "model": 'MODEL_FLYGUY', "behavior": '130051ac', "hasParams": False},
+    32: {"name": "Flyguy Flame (Chicken)", "type": 'Object', "model": 'MODEL_FLYGUY', "behavior": '130051ac', "hasParams": False},
+    33: {"name": "Missing (Cosmic Phantasm)", "type": 'None', "hasParams": False},
+    34: {"name": "Warp Pipe", "type": 'Object', "model": 'MODEL_THI_WARP_PIPE', "behavior": '130007a0', "hasParams": False},
+    35: {"name": "Missing (Badge)", "type": 'None', "hasParams": False},
+    36: {"name": "King Bobomb", "type": 'Object', "model": 'MODEL_KING_BOBOMB', "behavior": '130001f4', "hasParams": False},
+    37: {"name": "Whomp King", "type": 'Object', "model": 'MODEL_WHOMP', "behavior": '13002bb8', "hasParams": False},
+    38: {"name": "Big Boo", "type": 'Object', "model": 'MODEL_BOO', "behavior": '130027e4', "hasParams": False},
+    39: {"name": "Big Bully", "type": 'Object', "model": 'MODEL_BULLY', "behavior": '13003660', "hasParams": False},
+    40: {"name": "Big Chill Bully", "type": 'Object', "model": 'MODEL_BIG_CHILL_BULLY', "behavior": '13003700', "hasParams": False},
+    41: {"name": "Wiggler", "type": 'Macro', "preset": 'macro_wiggler', "hasParams": False},
+    42: {"name": "Bowser", "type": 'Object', "model": 'MODEL_BOWSER', "behavior": '13001850', "hasParams": False},
+    43: {"name": "Yellow Platform", "type": 'Object', "model": 'MODEL_CHECKERBOARD_PLATFOMR', "behavior": '13004ab0', "hasParams": False},
+    44: {"name": "Blue Platform (WIP)", "type": 'Object', "model": 'MODEL_BITS_BLUE_PLATFORM', "behavior": '13004ab0', "hasParams": False},
+    45: {"name": "Bowling Ball Spawner", "type": 'Object', "model": 'MODEL_NONE', "behavior": '13003aa4', "hasParams": False},
+    46: {"name": "Koopa the Quick", "type": 'Macro', "preset": 'macro_bob_koopa_the_quick', "hasParams": False},
+    47: {"name": "Purple Switch", "type": 'Object', "model": 'MODEL_PURPLE_SWITCH', "behavior": '13002558', "hasParams": False},
+    48: {"name": "Timed Breakable Box", "type": 'Macro', "preset": 'macro_hidden_box', "hasParams": False},
+    49: {"name": "Recovery Heart", "type": 'Macro', "preset": 'macro_recovery_heart', "hasParams": False},
+    50: {"name": "Test Mario", "type": 'None', "hasParams": False},
+    51: {"name": "Thwomp", "type": 'Macro', "preset": 'macro_thwomp', "hasParams": False},
+    52: {"name": "Whomp", "type": 'Macro', "preset": 'macro_whomp', "hasParams": False},
+    53: {"name": "Grindel", "type": 'Object', "model": 'MODEL_SSL_GRINDEL', "behavior": '13000b58', "hasParams": False},
+    54: {"name": "Lakitu", "type": 'Macro', "preset": 'macro_enemy_lakitu', "hasParams": False},
+    55: {"name": "Flyguy", "type": 'Macro', "preset": 'macro_fly_guy', "hasParams": False},
+    56: {"name": "Snufit", "type": 'Macro', "preset": 'macro_snufit', "hasParams": False},
+    57: {"name": "Circling Amp", "type": 'Macro', "preset": 'macro_circling_amp', "hasParams": False},
+    58: {"name": "Boo", "type": 'Macro', "preset": 'macro_boo', "hasParams": False},
+    59: {"name": "Mr. I", "type": 'Macro', "preset": 'macro_mr_i', "hasParams": False},
+    60: {"name": "Scuttlebug", "type": 'Macro', "preset": 'macro_scuttlebug', "hasParams": False},
+    61: {"name": "Bowser Bomb", "type": 'Object', "model": 'MODEL_BOWSER_BOMB', "behavior": '130037ec', "hasParams": False},
+    62: {"name": "Firespinner", "type": 'Object', "model": 'MODEL_LLL_ROTATING_BLOCK_FIRE_BARS', "behavior": '13001da8', "hasParams": False},
+    63: {"name": "Coin Formation", "type": 'Macro', "preset": 'macro_coin_line_horizontal_flying', "hasParams": True, "paramHandler": coinFormationParamHandler},
+    64: {"name": "Red Flame", "type": 'Object', "model": 'MODEL_RED_FLAME', "behavior": '13000c84', "hasParams": False},
+    65: {"name": "Blue Flame", "type": 'Object', "model": 'MODEL_BLUE_FLAME', "behavior": '13000c84', "hasParams": False},
+    66: {"name": "Fire Spitter", "type": 'Macro', "preset": 'macro_fire_spitter', "hasParams": False},
+    67: {"name": "Flamethrower", "type": 'Macro', "preset": 'macro_flamethrower', "hasParams": False},
+    68: {"name": "Spindrift", "type": 'Macro', "preset": 'macro_spindrift', "hasParams": False},
+    69: {"name": "Mr. Blizzard", "type": 'Macro', "preset": 'macro_mr_blizzard', "hasParams": False},
+    70: {"name": "Moneybag", "type": 'Macro', "preset": 'macro_moneybag', "hasParams": False},
+    71: {"name": "Skeeter", "type": 'Macro', "preset": 'macro_skeeter', "hasParams": False},
+    72: {"name": "Pokey", "type": 'Macro', "preset": 'macro_pokey', "hasParams": False},
+    73: {"name": "Small Breakable Box", "type": 'Macro', "preset": 'macro_breakable_box_small', "hasParams": False},
+    74: {"name": "Giant Breakable Box", "type": 'Macro', "preset": 'macro_breakable_box_giant', "hasParams": False},
+    75: {"name": "Missing (Crazy Box)", "type": 'None', "hasParams": False},
+    76: {"name": "Water Diamond", "type": 'Object', "model": 'MODEL_WDW_WATER_LEVEL_DIAMOND', "behavior": '130025f8', "hasParams": False},
+    77: {"name": "Wooden Signpost", "type": 'Macro', "preset": 'macro_wooden_signpost', "hasParams": False},
+    78: {"name": "Bobomb Buddy (NPC)", "type": 'Object', "model": 'MODEL_BOBOMB_BUDDY', "behavior": '130031dc', "hasParams": False},
+    79: {"name": "Missing (Button)", "type": 'None', "hasParams": False},
+    80: {"name": "Missing (On Off Block)", "type": 'None', "hasParams": False},
+    81: {"name": "Floating Platform", "type": 'Object', "model": 'MODEL_WDW_SQUARE_FLOATING_PLATFORM', "behavior": '13004284', "hasParams": False},
+    82: {"name": "Missing (Reinforced Box)", "type": 'None', "hasParams": False},
+    83: {"name": "Missing (On Off Block)", "type": 'None', "hasParams": False},
+    84: {"name": "Missing (Showrunner)", "type": 'None', "hasParams": False},
+    85: {"name": "Missing (Crowbar)", "type": 'None', "hasParams": False},
+    86: {"name": "Missing (Bullet Bill Mask)", "type": 'None', "hasParams": False},
+    87: {"name": "Toad (NPC)", "type": 'Object', "model": 'MODEL_TOAD', "behavior": '13002ef8', "hasParams": False},
+    88: {"name": "Tuxie (NPC)", "type": 'Object', "model": 'MODEL_PENGUIN', "behavior": '13002088', "hasParams": False},
+    89: {"name": "Ukiki (NPC)", "type": 'Object', "model": 'MODEL_UKIKI', "behavior": '13002088', "hasParams": False},
+    90: {"name": "Toad (NPC Moleman)", "type": 'Object', "model": 'MODEL_MONTY_MOLE', "behavior": '13002ef8', "hasParams": False},
+    91: {"name": "Buddy (NPC Cobie)", "type": 'Object', "model": 'MODEL_BOBOMB_BUDDY', "behavior": '130031dc', "hasParams": False},    
+    92: {"name": "Treadmill (Conveyor)", "type": 'Macro', "preset": 'macro_ttc_small_treadmill', "hasParams": False},
+    93: {"name": "Missing (Timed Block)", "type": 'None', "hasParams": False},
+    94: {"name": "Hidden Star Trigger", "type": 'Macro', "preset": 'macro_hidden_star_trigger', "hasParams": False},
+    95: {"name": "Star Trigger Star? (WIP)", "type": 'Object', "model": 'MODEL_STAR', "behavior": '13003efc', "hasParams": False},
 }
 
 surface_walkable = "SURFACE_NOT_SLIPPERY"
@@ -326,7 +336,8 @@ idToEnvFX = {0: 'ENVFX_MODE_NONE', 1: 'ENVFX_LAVA_BUBBLES', 2: 'ENVFX_SNOW_NORMA
 # idk how exactly this works but... magic?
 #0 is fine, 4 is fine? 2 is fine, 6 is fine
 # 1 did nothing,
-rotCorrection = {0: 0, 1: 3, 2: 1, 3: 3, 4: 2, 5: 1, 6: 3}
+# found something with rot value 7?
+rotCorrection = {0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 2, 6: 3, 7: 3}
 
 def compute_face_normal(face_verts):
     """Compute the normal of a face from its vertices."""
@@ -597,7 +608,7 @@ def createFence(curr_bm, tileGrid, pos, rot):
     return len(faces)
 
 def createPole(curr_bm, tileGrid, pos, rot):
-    verts = [(-0.5,-0.5,-0.5), (0.5,-0.5,-0.5), (0.5,0.5,-0.5), (-0.5,0.5,-0.5),(-0.5,-0.5,0.5), (0.5,-0.5,0.5), (0.5,0.5,0.5), (-0.5,0.5,0.5), ]
+    verts = [(0,-0.125,-0.5), (0.125,0,-0.5), (0,0.125,-0.5), (-0.125,0,-0.5),(0,-0.125,0.5), (0.125,0,0.5), (0,0.125,0.5), (-0.125,0,0.5), ]
     faces = []
     renderOuterFaces(faces, pos, tileGrid, (3,2,1,0), (4,5,6,7), (1,2,6,5), (4,7,3,0), (2,3,7,6), (0,1,5,4))
     createPoly(curr_bm, pos, rot, verts, faces)
@@ -628,7 +639,7 @@ def createBars(curr_bm, tileGrid, pos, rot):
         if myHasTile:
             endY = 0.5
         verts += [(-0.125,startY,-0.5), (0.125,startY,-0.5), (0.125,endY,-0.5), (-0.125,endY,-0.5),(-0.125,startY,0.5), (0.125,startY,0.5), (0.125,endY,0.5), (-0.125,endY,0.5), ]
-        faces += [(11,10,9,8), (12,13,14,15), (8,9,13,12), (10,11,15,14), (12,15,11,8), (9,11,14,13)]
+        faces += [(11,10,9,8), (12,13,14,15), (8,9,13,12), (10,11,15,14), (12,15,11,8), (9,10,14,13)]
     createPoly(curr_bm, pos, rot, verts, faces)
     return len(faces)
 
@@ -787,7 +798,7 @@ class ImportMB64(bpy.types.Operator, ImportHelper):
         bpy.context.object.name = "Level"
         bpy.context.object.sm64_obj_type = 'Level Root'
         background = idToBackground[self.mb_bg]
-        if background == "VOID":
+        if background in ["VOID", "NONE"]:
             bpy.context.object.useBackgroundColor = True
         else:
             bpy.context.object.background = background
@@ -930,6 +941,8 @@ class ImportMB64(bpy.types.Operator, ImportHelper):
                     elif objData["type"] == 'Macro':
                         bpy.context.object.sm64_macro_enum = objData["preset"]
                     bpy.context.object.name = objData["name"]
+                    if objData["hasParams"]:
+                        objData["paramHandler"](self, objData, bParam)
                 else:
                     bpy.context.object.sm64_obj_type = 'None'
                     bpy.context.object.name = f"Unknown Object ID#{type}"
