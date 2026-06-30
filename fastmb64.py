@@ -66,7 +66,7 @@ idToObjData = {2: {"name": "Power Star", "type": 'Object', "model": 'MODEL_STAR'
     40: {"name": "Big Chill Bully", "type": 'Object', "model": 'MODEL_BIG_CHILL_BULLY', "behavior": '13003700', "hasParams": False},
     41: {"name": "Wiggler", "type": 'Macro', "preset": 'macro_wiggler', "hasParams": False},
     42: {"name": "Bowser", "type": 'Object', "model": 'MODEL_BOWSER', "behavior": '13001850', "hasParams": False},
-    43: {"name": "Yellow Platform", "type": 'Object', "model": 'MODEL_CHECKERBOARD_PLATFOMR', "behavior": '13004ab0', "hasParams": False},
+    43: {"name": "Yellow Platform", "type": 'Object', "model": 'MODEL_CHECKERBOARD_PLATFORM', "behavior": '13004ab0', "hasParams": False},
     44: {"name": "Blue Platform (WIP)", "type": 'Object', "model": 'MODEL_BITS_BLUE_PLATFORM', "behavior": '13004ab0', "hasParams": False},
     45: {"name": "Bowling Ball Spawner", "type": 'Object', "model": 'MODEL_NONE', "behavior": '13003aa4', "hasParams": False},
     46: {"name": "Koopa the Quick", "type": 'Macro', "preset": 'macro_bob_koopa_the_quick', "hasParams": False},
