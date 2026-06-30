@@ -11,7 +11,9 @@ The add-on adds the option to import Mario Builder 64 (.mb64) files of version v
 
 ## Installation
 
-Download the script then open up Blender. Go to Edit > Preferences > Add-ons and select the arrow at the top right, followed by "Install from Disk" and select the .py file.
+Install [Fast64](https://github.com/Fast-64/fast64). Make sure  N (keyboard) > Fast64 > Game is set to "SM64". 
+Then download the script and open up Blender. Go to Edit > Preferences > Add-ons and select the arrow at the top right, followed by "Install from Disk" and select the .py file.
+It might be needed to close and reopen Blender between updates and installments.
 
 ## Todo
 
